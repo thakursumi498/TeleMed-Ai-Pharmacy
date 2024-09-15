@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharmacy Integration - Enhanced Experience</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@600&family=Poppins:wght@400;600&display=swap"
+        rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            color: #333;
+            line-height: 1.6;
+            scroll-behavior: smooth;
+        }
+
+        section#pharmacy {
+            max-width: 90%;
+            margin: 50px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #ff5722;
+            text-align: center;
+            font-size: 2.4rem;
+            margin-bottom: 20px;
+        }
+
+        p {
+            text-align: center;
+            color: #555;
+            margin-bottom: 20px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        input[type="file"],
+        select {
+            width: 100%;
+            max-width: 400px;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.1);
+            transition: border 0.3s ease-in-out;
+        }
+
+        input[type="file"]:focus,
+        select:focus {
+            border-color: #ff5722;
+        }
+
+        button {
+            background-color: #ff5722;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s;
+        }
+
+        button:hover {
+            background-color: #e64a19;
+            transform: translateY(-2px);
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        #medicineInfo {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .medicine-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            background: #f9f9f9;
+            border-radius: 10px;
+            transition: background 0.3s ease;
+        }
+
+        .medicine-item:hover {
+            background-color: #ffe0b2;
+        }
+
+        #pharmacyList {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+        }
+
+        .pharmacy-item {
+            width: 30%;
+            margin: 15px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            background: #f1f1f1;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .pharmacy-item:hover {
+            background-color: #ffe0b2;
+        }
+
+        #map {
+            margin-top: 30px;
+            height: 400px;
+            width: 100%;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        #loadingSpinner {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+            color: #ff5722;
+        }
+    </style>
+</head>
+
+<body>
+
+    <section id="pharmacy">
+        <h2><i class="fas fa-prescription-bottle-alt"></i>Your Ai Pharmacy </h2>
+        <p>Upload your prescription to find out what medicines are prescribed and locate nearby pharmacies.</p>
+
+        <form id="prescriptionUploadForm">
+            <label for="prescriptionFile">Upload Prescription</label>
+            <input type="file" id="prescriptionFile" name="prescriptionFile" accept=".jpg,.jpeg,.png,.pdf"><br>
+            <button type="submit"><i class="fas fa-upload"></i> Submit</button>
+        </form>
+
+        <div id="loadingSpinner">
+            <i class="fas fa-spinner fa-spin"></i> Processing your prescription...
+        </div>
+
+        <div id="medicineInfo">
+            <h3>prescribed Medicines and Their Purposes</h3>
+            <div id="medicineList"></div>
+        </div>
+
+        <div id="pharmacyList" class="pharmacy-list">
+            <h3>Available Pharmacies</h3>
+            <!-- Pharmacies will be dynamically added here -->
+        </div>
+
+        <div id="map"></div>
+    </section>
+
+    <div id="pharmacyModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3 id="modalPharmacyName"></h3>
+            <p id="modalPharmacyLocation"></p>
+            <p id="modalMedicinePrice"></p>
+            <p id="modalDeliveryTime"></p>
+            <div id="modalMap" style="height: 300px; width: 100%; border-radius: 15px;"></div>
+        </div>
+    </div>
+
+    <script>
+       const fileToMedicineData = {
+    '1': {
+        medicines: {
+            'Atenolol 50mg': 'Used to treat high blood pressure and heart disease.',
+            'Simvastatin 20mg': 'Used to lower cholesterol and triglycerides.',
+            'Nitroglycerin 0.4mg': 'Used to prevent chest pain (angina) in people with heart disease.'
+        },
+        pharmacies: [
+            { name: 'davaindia GENERIC PHARMACY', location: 'No D258, Ground Floor Deoil, Devli Rd, Krishna Park Colony, Khanpur, New Delhi, Delhi 110062', price: '₹120', deliveryTime: '2 hours', lat: 12.9716, lng: 77.5946 },
+
+            { name: 'DP Chemist', location: 'Shop No UGF 20 Green valley Plaza, RPS Green Valley, Sector 42, Faridabad, Haryana 121010', price: '₹115', deliveryTime: '1.5 hours', lat: 12.9734, lng: 77.6060 }
+        ]
+    },
+    '2': {
+        medicines: {
+            'Atenolol 50mg': 'Used to treat high blood pressure and heart disease.',
+            'Simvastatin 20mg': 'Used to lower cholesterol and triglycerides.',
+            'Nitroglycerin 0.4mg': 'Used to prevent chest pain (angina) in people with heart disease.'
+        },
+        pharmacies: [
+        { name: 'davaindia GENERIC PHARMACY', location: 'No D258, Ground Floor Deoil, Devli Rd, Krishna Park Colony, Khanpur, New Delhi, Delhi 110062', price: '₹120', deliveryTime: '2 hours', lat: 12.9716, lng: 77.5946 },
+
+        { name: 'DP Chemist', location: 'Shop No UGF 20 Green valley Plaza, RPS Green Valley, Sector 42, Faridabad, Haryana 121010', price: '₹115', deliveryTime: '1.5 hours', lat: 12.9734, lng: 77.6060 }
+        ]
+    },
+    '3': {
+        medicines: {
+            'Paracetamol 500mg': 'Used to relieve pain and reduce fever.',
+            'Ibuprofen 400mg': 'Used to reduce inflammation and treat pain.'
+        },
+        pharmacies: [
+            { name: 'Pain Relief Pharmacy', location: '100 Relief St, Bangalore', price: '₹50', deliveryTime: '1 hour', lat: 12.9636, lng: 77.5994 },
+            { name: 'Comfort Pharmacy', location: '200 Calm Ave, Bangalore', price: '₹45', deliveryTime: '1.5 hours', lat: 12.9750, lng: 77.6110 }
+        ]
+    },
+    '4': {
+        medicines: {
+            'Cetrizine 10mg': 'Used to relieve allergy symptoms.',
+            'Loratadine 10mg': 'Used to treat allergic reactions and hives.'
+        },
+        pharmacies: [
+            { name: 'Allergy Care Pharmacy', location: '101 Pollen St, Bangalore', price: '₹30', deliveryTime: '2 hours', lat: 12.9686, lng: 77.6105 },
+            { name: 'AllerRelief Pharmacy', location: '203 Breeze Ave, Bangalore', price: '₹28', deliveryTime: '1.5 hours', lat: 12.9725, lng: 77.5984 }
+        ]
+    },
+    '5': {
+        medicines: {
+            'Omeprazole 20mg': 'Used to treat acid reflux and heartburn.',
+            'Ranitidine 150mg': 'Used to reduce stomach acid production.'
+        },
+        pharmacies: [
+            { name: 'DigestPharma', location: '104 Stomach St, Bangalore', price: '₹70', deliveryTime: '1 hour', lat: 12.9740, lng: 77.5920 },
+            { name: 'AcidRelief Pharmacy', location: '206 Gastro Ave, Bangalore', price: '₹65', deliveryTime: '2 hours', lat: 12.9768, lng: 77.6035 }
+        ]
+    },
+    '6': {
+        medicines: {
+            'Amoxicillin 500mg': 'Used to treat bacterial infections.',
+            'Azithromycin 250mg': 'Used for treating infections such as chest infections, pneumonia, and sexually transmitted infections.'
+        },
+        pharmacies: [
+            { name: 'InfectionCare Pharmacy', location: '302 Antibiotic Rd, Bangalore', price: '₹120', deliveryTime: '3 hours', lat: 12.9412, lng: 77.6244 },
+            { name: 'Antibiotic Plus Pharmacy', location: '400 Pathogen St, Bangalore', price: '₹115', deliveryTime: '2.5 hours', lat: 12.9525, lng: 77.5862 }
+        ]
+    },
+    '7': {
+        medicines: {
+            'Aspirin 75mg': 'Used to prevent heart attacks and strokes.',
+            'Clopidogrel 75mg': 'Used to prevent blood clots in people with heart disease.'
+        },
+        pharmacies: [
+            { name: 'CardioMed Pharmacy', location: '501 Artery St, Bangalore', price: '₹80', deliveryTime: '2 hours', lat: 12.9490, lng: 77.6123 },
+            { name: 'HeartWell Pharmacy', location: '603 Vascular Ave, Bangalore', price: '₹75', deliveryTime: '1.5 hours', lat: 12.9547, lng: 77.5986 }
+        ]
+    },
+    '8': {
+        medicines: {
+            'Vitamin D3 1000 IU': 'Used to treat or prevent bone disorders.',
+            'Calcium Carbonate 500mg': 'Used as a dietary supplement in those who do not get enough calcium.'
+        },
+        pharmacies: [
+            { name: 'BoneCare Pharmacy', location: '602 Bone St, Bangalore', price: '₹150', deliveryTime: '2 hours', lat: 12.9721, lng: 77.5948 },
+            { name: 'CalciumPlus Pharmacy', location: '707 Joint Ave, Bangalore', price: '₹145', deliveryTime: '2 hours', lat: 12.9739, lng: 77.5905 }
+        ]
+    },
+    '9': {
+        medicines: {
+            'Cetirizine 10mg': 'Used to relieve allergy symptoms such as a runny nose, sneezing, itchy eyes, and hives.',
+            'Montelukast 10mg': 'Used to prevent asthma attacks and to relieve symptoms of allergies.'
+        },
+        pharmacies: [
+            { name: 'Allergy Relief Pharmacy', location: '405 Hayfever Rd, Bangalore', price: '₹35', deliveryTime: '2 hours', lat: 12.9346, lng: 77.6115 },
+            { name: 'AsthmaCare Pharmacy', location: '509 Breath Ave, Bangalore', price: '₹32', deliveryTime: '1.5 hours', lat: 12.9423, lng: 77.6049 }
+        ]
+    },
+    '10': {
+        medicines: {
+            'Ibuprofen 200mg': 'Used to reduce fever and treat pain or inflammation.',
+            'Paracetamol 500mg': 'Used to treat pain and fever.'
+        },
+        pharmacies: [
+            { name: 'PainFree Pharmacy', location: '708 Ache St, Bangalore', price: '₹55', deliveryTime: '1 hour', lat: 12.9536, lng: 77.6025 },
+            { name: 'ReliefMed Pharmacy', location: '810 Soothe Ave, Bangalore', price: '₹50', deliveryTime: '1.5 hours', lat: 12.9621, lng: 77.5964 }
+        ]
+    }
+};
+
+        document.getElementById('prescriptionUploadForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            // Show loading spinner
+            document.getElementById('loadingSpinner').style.display = 'block';
+
+            const prescriptionFile = document.getElementById('prescriptionFile');
+            const fileName = prescriptionFile.value.split('\\').pop().split('.')[0];
+
+            setTimeout(() => {
+                document.getElementById('loadingSpinner').style.display = 'none';
+
+                if (fileToMedicineData[fileName]) {
+                    const { medicines, pharmacies } = fileToMedicineData[fileName];
+                    displayMedicines(medicines);
+                    displayPharmacies(pharmacies);
+                } else {
+                    alert("Unable to process this prescription. Please upload a valid prescription.");
+                }
+            }, 2000); // Simulated loading delay
+        });
+
+        function displayMedicines(medicines) {
+            const medicineList = document.getElementById('medicineList');
+            medicineList.innerHTML = '';
+            for (let [medicine, description] of Object.entries(medicines)) {
+                const medicineDiv = document.createElement('div');
+                medicineDiv.classList.add('medicine-item');
+                medicineDiv.innerHTML = `<strong>${medicine}</strong>: ${description}`;
+                medicineList.appendChild(medicineDiv);
+            }
+            document.getElementById('medicineInfo').style.display = 'block';
+        }
+
+        function displayPharmacies(pharmacies) {
+            const pharmacyList = document.getElementById('pharmacyList');
+            pharmacyList.innerHTML = '';
+            pharmacies.forEach(pharmacy => {
+                const pharmacyDiv = document.createElement('div');
+                pharmacyDiv.classList.add('pharmacy-item');
+                pharmacyDiv.innerHTML = `
+                    <h4>${pharmacy.name}</h4>
+                    <p>${pharmacy.location}</p>
+                    <p>Price: ${pharmacy.price}</p>
+                    <p>Delivery Time: ${pharmacy.deliveryTime}</p>
+                `;
+                pharmacyDiv.addEventListener('click', () => {
+                    showPharmacyModal(pharmacy);
+                });
+                pharmacyList.appendChild(pharmacyDiv);
+            });
+        }
+
+        function showPharmacyModal(pharmacy) {
+            document.getElementById('modalPharmacyName').textContent = pharmacy.name;
+            document.getElementById('modalPharmacyLocation').textContent = pharmacy.location;
+            document.getElementById('modalMedicinePrice').textContent = `Price: ${pharmacy.price}`;
+            document.getElementById('modalDeliveryTime').textContent = `Delivery Time: ${pharmacy.deliveryTime}`;
+            document.getElementById('pharmacyModal').style.display = 'block';
+        }
+
+        document.querySelector('.close').addEventListener('click', function () {
+            document.getElementById('pharmacyModal').style.display = 'none';
+        });
+
+        window.onclick = function (event) {
+            if (event.target == document.getElementById('pharmacyModal')) {
+                document.getElementById('pharmacyModal').style.display = 'none';
+            }
+        };
+    </script>
+
+</body>
+
+</html>
